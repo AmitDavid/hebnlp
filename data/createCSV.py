@@ -8,8 +8,8 @@ YOUTUBE_API_KEY = "AIzaSyCgJDfT5eyRi6M9u893npJRC7gQ6Ql_YQU"
 HEBREW_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']
 
 LIST_OF_CHANNEL_IDS = {
-    # "UCDJ6HHS5wkNaSREumdJRYhg": "Kan11",
-    # "UC_HwfTAcjBESKZRJq6BTCpg": "Kan11News",
+    "UCDJ6HHS5wkNaSREumdJRYhg": "Kan11",
+    "UC_HwfTAcjBESKZRJq6BTCpg": "Kan11News",
     "UCP926AKuhsPeSAnqf8avq7w": "ScienceDavidson",
 }
 
