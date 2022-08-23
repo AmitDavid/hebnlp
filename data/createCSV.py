@@ -1,5 +1,6 @@
+import enum
 from googleapiclient.discovery import build
-import pandas
+import pandas as pd
 import emoji
 import re
 
@@ -7,8 +8,8 @@ YOUTUBE_API_KEY = "AIzaSyCgJDfT5eyRi6M9u893npJRC7gQ6Ql_YQU"
 HEBREW_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']
 
 LIST_OF_CHANNEL_IDS = {
-    "UCDJ6HHS5wkNaSREumdJRYhg": "Kan11",
-    "UC_HwfTAcjBESKZRJq6BTCpg": "Kan11News",
+    # "UCDJ6HHS5wkNaSREumdJRYhg": "Kan11",
+    # "UC_HwfTAcjBESKZRJq6BTCpg": "Kan11News",
     "UCP926AKuhsPeSAnqf8avq7w": "ScienceDavidson",
 }
 
@@ -28,6 +29,13 @@ def is_heb(text, letters_limit=20):
     return False
 
 
+def has_emojis(text):
+    '''
+    Check if text has emojis
+    '''
+    return emoji.emoji_count(text) > 0
+
+
 def senitize_text(text):
     '''
     Clean text from unwanted characters
@@ -43,11 +51,8 @@ def senitize_text(text):
     text = text.replace('\t', ' ')
 
     # Remove excess whitespaces using regex
-    text = re.sub('\s+', ' ', text)
     text.strip()
-
-    # Remove non hebrew letters using regex
-    text = re.sub('[^א-ת]', '', text)
+    text = re.sub('\s+', ' ', text)
 
     # Remove HTML tags using regex
     text = re.sub('<.*?>', '', text)
@@ -60,10 +65,8 @@ def split_emojis_from_text(text):
     Split text from emojis
     Return text and list of emojis
     '''
-    # Get all emojis in text
-    emojis_list = emoji.emoji_list(text)
-    # Keep only emoji from response
-    emoji_text = [emoji.emoji for emoji in emojis_list]
+    # Get all uniqe emojis in text
+    emojis_list = emoji.distinct_emoji_list(text)
 
     # Remove emojis from text
     text = emoji.replace_emoji(text)
@@ -71,13 +74,13 @@ def split_emojis_from_text(text):
     return text, emojis_list
 
 
-def get_comments_from_video(youtube, video_ID, max_emojis_in_text=10):
+def get_comments_from_video(youtube, video_ID, max_emojis_in_text=5):
     '''
     Return list of comments from video ID
     Returns DF with columns: text, emoji
     Will return only top comments (No comments in comment threads)
     '''
-    df = pandas.DataFrame(columns=['text', 'emoji'])
+    df = pd.DataFrame(columns=['text', 'emoji'])
 
     try:
         res = youtube.commentThreads().list(
@@ -93,7 +96,7 @@ def get_comments_from_video(youtube, video_ID, max_emojis_in_text=10):
             text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
 
             # Skip non-hebrew text
-            if is_heb(text):
+            if is_heb(text) and has_emojis(text):
                 # Senitize text
                 text = senitize_text(text)
 
@@ -101,10 +104,10 @@ def get_comments_from_video(youtube, video_ID, max_emojis_in_text=10):
                 text, emojis_list = split_emojis_from_text(text)
                 if len(emojis_list) <= max_emojis_in_text:
                     for emoji in emojis_list:
-                        df = pandas.concat([df, {'text': text, 'emoji': emoji}])
+                        df = pd.concat([df, pd.DataFrame({'text': [text], 'emoji': [emoji]})])
 
     except Exception as e:
-        print(f'HttpError: {e}')
+        # Will happend when video is private or deleted
         return None
 
     return df
@@ -115,7 +118,7 @@ def get_comments_from_videos(youtube, video_IDs_list):
     Return list of comments from all the videos in  video_IDs_list
     Will return only top comments (No comments in comment threads)
     '''
-    df = pandas.DataFrame(columns=['text', 'emoji'])
+    df = pd.DataFrame(columns=['text', 'emoji'])
 
     number_of_videos = len(video_IDs_list)
     progress_percentage = 0
@@ -127,7 +130,9 @@ def get_comments_from_videos(youtube, video_IDs_list):
             progress_percentage = new_progress_percentage
 
         # Get video comments
-        df = pandas.concat([df, get_comments_from_video(youtube, video_id)])
+        df = pd.concat([df, get_comments_from_video(youtube, video_id)])
+
+    return df
 
 
 def get_channel_videos(youtube, channel_ID):
@@ -145,7 +150,7 @@ def get_channel_videos(youtube, channel_ID):
     while 1:
         res = youtube.playlistItems().list(playlistId=playlist_id,
                                            part='snippet',
-                                           maxResults=5000,
+                                           maxResults=1000,
                                            pageToken=next_page_token).execute()
         videos += res['items']
         next_page_token = res.get('nextPageToken')
@@ -165,7 +170,6 @@ def create_CSV_from_DT(df, output_file_name):
     Create CSV from dataframe
     file name is output_file_name
     '''
-    output_file_name += '.csv'
     df.to_csv(output_file_name, index=False, header=False, encoding='utf-8')
 
 
@@ -173,9 +177,9 @@ if __name__ == '__main__':
     # Init API
     youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
-    list_of_comments = []
-    for channel_id in LIST_OF_CHANNEL_IDS:
-        print(f'Getting comments from {LIST_OF_CHANNEL_IDS[channel_id]}')
+    list_of_comments = None
+    for i, channel_id in enumerate(LIST_OF_CHANNEL_IDS):
+        print(f'Getting comments from {LIST_OF_CHANNEL_IDS[channel_id]} ({i + 1} out of {len(LIST_OF_CHANNEL_IDS)})')
 
         # Get videos from channel
         print('Getting video IDs list')
@@ -183,10 +187,11 @@ if __name__ == '__main__':
 
         # Get comments from videos
         print('Getting comments from videos')
-        list_of_comments += get_comments_from_videos(youtube, videos_id_list)
+        comments_df = get_comments_from_videos(youtube, videos_id_list)
 
         # Create CSV from dataframe
-        print('Creating CSV from dataframe')
-        create_CSV_from_DT(list_of_comments, LIST_OF_CHANNEL_IDS[channel_id])
+        file_name = f'./data/{LIST_OF_CHANNEL_IDS[channel_id]}_comments.csv'
+        print(f'Creating CSV from dataframe. File name is: "{file_name}"')
+        create_CSV_from_DT(comments_df, file_name)
 
     print("Done")
