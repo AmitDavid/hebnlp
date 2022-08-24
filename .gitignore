@@ -1,2 +1,4 @@
-./models/.
-./outputs/.
+models/
+outputs/
+cache_dir/
+runs/
