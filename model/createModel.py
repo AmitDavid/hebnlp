@@ -11,9 +11,9 @@ transformers_logger = logging.getLogger("transformers")
 transformers_logger.setLevel(logging.WARNING)
 
 LIST_OF_PATH_TO_CSV= {
-    "Kan11":r"C:\Users\User\Desktop\study\hebnlp\hebnlp\data\Kan11_comments.csv",
-   "Kan11News":r"C:\Users\User\Desktop\study\hebnlp\hebnlp\data\Kan11News_comments.csv",
-    "ScienceDavidson":r"C:\Users\User\Desktop\study\hebnlp\hebnlp\data\ScienceDavidson_comments.csv",
+    #"Kan11":"data/Kan11_comments.csv",
+    # "Kan11News":"data/Kan11News_comments.csv",
+    "ScienceDavidson":"data/ScienceDavidson_comments.csv",
 }
 
 def reads_csv(path):
@@ -34,16 +34,28 @@ if __name__ == '__main__':
 
     # load data from csv
     df_davison = reads_csv(LIST_OF_PATH_TO_CSV["ScienceDavidson"])
-    df_Kan11 = reads_csv(LIST_OF_PATH_TO_CSV["Kan11"])
-    df_kan11News = reads_csv(LIST_OF_PATH_TO_CSV["Kan11News"])
+    #df_Kan11 = reads_csv(LIST_OF_PATH_TO_CSV["Kan11"])
+    # df_kan11News = reads_csv(LIST_OF_PATH_TO_CSV["Kan11News"])
 
     # concat data and convert emojis to unique numbers 
-    all_data = pd.concat([df_davison, df_Kan11, df_kan11News])
+    all_data = pd.concat([df_davison])
     all_data['labels'] = all_data.groupby(["emoji"]).ngroup()
+    fsjgl = { int(row["labels"]): row["emoji"] for index, row in all_data.iterrows()}
+    print(fsjgl)
+
+     #save model
+    file_name = 'models\\model_27.8_2_dict'
+    outfile = open(file_name, 'wb')
+    pickle.dump(fsjgl, outfile)
+    outfile.close()
+
+    all_data = all_data.drop('emoji', axis=1)
+    print(all_data)
 
    #### smaller data frame - to delete later
-    num_of_classes = 20
-    all_data = all_data[all_data['labels']< num_of_classes]
+    num_of_classes = max(all_data['labels']) + 1
+    print(num_of_classes)
+    #all_data = all_data[all_data['labels']< num_of_classes]
 
 
     # Preparing train data and eval data
@@ -55,10 +67,10 @@ if __name__ == '__main__':
     # Optional model configuration
     # todo3 : I added output_dir="output_dir"
     model_args = ClassificationArgs(num_train_epochs=1, output_dir="outputs", overwrite_output_dir=True)
-
+    
     # todo2 : use_cuda=False why??? doesnt work otherwise
     # Create a ClassificationModel
-    model = ClassificationModel("roberta", "roberta-base", args=model_args,num_labels=num_of_classes, use_cuda=False)
+    model = ClassificationModel("roberta", "roberta-base", args=model_args, use_cuda=False, num_labels=num_of_classes)
 
     # Train the model
     model.train_model(train_df)
@@ -68,7 +80,7 @@ if __name__ == '__main__':
     result, model_outputs, wrong_predictions = model.eval_model(eval_df)
 
     #save model
-    file_name = 'models\model_23.8'
+    file_name = 'models\\model_27.8_2'
     outfile = open(file_name, 'wb')
     pickle.dump(model, outfile)
     outfile.close()

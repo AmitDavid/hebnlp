@@ -1,1 +1,13 @@
-python 3.8.5
+
+# The project explaination
+
+# to create 'requirements' file
+
+
+# How to run
+0) Download requirments from the 'requirements' file
+1) Clone git to your compter
+2) From the folder "HEBNLP", run the command "gui/gui.py"
+3) Choose model from the list
+4) Write your text into the text box
+5) Press 'enter' to predict emoji
