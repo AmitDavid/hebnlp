@@ -12,7 +12,7 @@ from threading import Thread, Lock
 def save_emoji_as_img(text):
     my_string = text
 
-    with Image.new('RGB', (400, 80), (232, 223, 220)) as image:
+    with Image.new('RGB', (150, 150), (232, 223, 220)) as image:
         font = ImageFont.truetype('arial.ttf', 40)
 
         with Pilmoji(image) as pilmoji:
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         event, values = window.read(timeout=10)
         if prediction_thread is not None and prediction_thread.is_alive():
             window['-LOADINGANIMATION-'].update(visible=True)
-            window["-LOADINGANIMATION-"].UpdateAnimation("Adobe_cat.gif", time_between_frames=40)
+            window["-LOADINGANIMATION-"].UpdateAnimation("gui/Adobe_cat.gif", time_between_frames=40)
             window['-TemporarlyOutput-'].update(visible=False)
             window['reset_Button'].update(disabled=True)
 
@@ -131,12 +131,8 @@ if __name__ == '__main__':
         # todo: האם \r הוא תמיד אנטר בכל מערכת.
         if event == "\r":
 
-            # missing model
-            if (len(values['-MODEL-']) == 0) or (values['-MODEL-'] == default_model):
-                print_invalid_input("אנא הכנס מודל", window)
-
             # missing sentence
-            elif len(values['-INPUT-'].strip()) == 0:
+            if len(values['-INPUT-'].strip()) == 0:
                 print_invalid_input("אנא הכנס טקסט", window)
 
             # great, now predict!

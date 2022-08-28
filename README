@@ -1,4 +1,3 @@
-
 # The project explaination
 
 # to create 'requirements' file
@@ -21,3 +20,7 @@ to try group the emojies that are the same.
 maybe there is such project exsit that groups similar emojies.
 4. more models - logistic regression - sklearn....
 5. finish the report
+6. the \r event, is it the same in exh os? check
+7. todo in the code to check
+8. problem with the chosen model...stuck on the previous
+9. the gui gets too big

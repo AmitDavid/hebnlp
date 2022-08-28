@@ -40,17 +40,22 @@ if __name__ == '__main__':
     # concat data and convert emojis to unique numbers 
     all_data = pd.concat([df_davison])
     all_data['labels'] = all_data.groupby(["emoji"]).ngroup()
-    fsjgl = { int(row["labels"]): row["emoji"] for index, row in all_data.iterrows()}
-    print(fsjgl)
+    all_data['unicode'] = ""
+
+    emoji_dict = {}
+    for index, row in all_data.iterrows():
+        emoji_dict[int(row["labels"])] = row["emoji"] 
+        row["unicode"] = ord(row['emoji'][0])
+
+    print(all_data)
 
      #save model
     file_name = 'models\\model_27.8_2_dict'
     outfile = open(file_name, 'wb')
-    pickle.dump(fsjgl, outfile)
+    pickle.dump(emoji_dict, outfile)
     outfile.close()
 
     all_data = all_data.drop('emoji', axis=1)
-    print(all_data)
 
    #### smaller data frame - to delete later
     num_of_classes = max(all_data['labels']) + 1
