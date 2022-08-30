@@ -7,6 +7,7 @@ from pilmoji import Pilmoji
 from PIL import Image, ImageFont
 import pickle
 from threading import Thread, Lock
+import pandas as pd
 
 
 def save_emoji_as_img(text):
@@ -33,18 +34,41 @@ def load_dict(file_name):
     dicts = pickle.load(infile)
     infile.close()
     return dicts
+
+def load_count_vect(file_name):
+    file_name = "models\\" + file_name
+    infile = open(file_name, 'rb')
+    count_vect = pickle.load(infile)
+    infile.close()
+    return count_vect
+
+def load_tf_transforme(file_name):
+    file_name = "models\\" + file_name
+    infile = open(file_name, 'rb')
+    tf_transforme = pickle.load(infile)
+    infile.close()
+    return tf_transforme    
 # ------------------------------------------------------------------------
 def model_prediction(window, sentence, file_name):
     path = "models\\" + file_name
     # load_model
     model = load_model(path)
 
-    # predict
-    predictions, raw_outputs = model.predict([sentence])
-    print(predictions)
-    # show result in GUI
-    # window['-TemporarlyOutput-'].update(str(predictions.tolist()))
+    location_file_1 = file_name + '_count_vect'
+    count_vect = load_count_vect(location_file_1)
 
+    location_file_2 = file_name + '_tf_transformer'
+    tf_transformer = load_tf_transforme(location_file_2)
+
+    train_df = pd.DataFrame({'text': [sentence]})
+    X_sentence_counts = count_vect.transform(train_df.text)
+    X_test_tfidf = tf_transformer.transform(X_sentence_counts)
+    predictions=model.predict(X_test_tfidf)
+
+    print(predictions)
+
+    # show result in GUI
+  
     path_dict = "models\\" + file_name + '_dict'
     emoji_dict = load_dict(path_dict)
     str_emoji = emoji_dict[predictions[0]]
@@ -82,7 +106,12 @@ def initialize_layout():
 
     return layout
 
-
+def start_loading_animation(window):
+    window['-LOADINGANIMATION-'].update(visible=True)
+    window["-LOADINGANIMATION-"].UpdateAnimation("gui/Adobe_cat.gif", time_between_frames=40)
+    window['-TemporarlyOutput-'].update(visible=False)
+    window['reset_Button'].update(disabled=True)
+    window['-OUTPUT-'].update()
 # ------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -111,10 +140,7 @@ if __name__ == '__main__':
     while True:
         event, values = window.read(timeout=10)
         if prediction_thread is not None and prediction_thread.is_alive():
-            window['-LOADINGANIMATION-'].update(visible=True)
-            window["-LOADINGANIMATION-"].UpdateAnimation("gui/Adobe_cat.gif", time_between_frames=40)
-            window['-TemporarlyOutput-'].update(visible=False)
-            window['reset_Button'].update(disabled=True)
+            start_loading_animation(window)
 
         else:
             window['-LOADINGANIMATION-'].update(visible=False)

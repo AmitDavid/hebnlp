@@ -1,34 +1,47 @@
-from simpletransformers.classification import ClassificationModel, ClassificationArgs
 import pandas as pd
-import logging
 import pickle
 import re
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.model_selection import train_test_split
 import numpy as np
+import os
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from datetime import datetime
+
+
 
 EMOJI_SUBGROUPS = {
-    '😃': {'💯','👑','🏆','😀', '😃', '😄', '😁', '😅', '🙂', '🙃', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤠', '🥳', '😎', '🤓', '🧐', '🤤', '😌', },
+    '😃': {'🏅','🔥','💯','👑','🏆','😀', '😃', '😄', '😁', '😅', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤓', '🧐', },
     '🤣': {'🤣', '😂', '😆', '🤪', '😝', '😹'},
-    '🥰': {'🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
-    '💗': {'💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', },
-    '🙁': {'🤦‍','😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤮', '🤧', '😔', '😪', },
+    '💗': {'🌈','🙏','💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍','🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
+    '😢': {'🤦‍','😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪', '👎' },
     '😱': {'🙀', '😯', '😱', '😮', '😲', '😳', '😵', '🤯', },
-    '😾': {'😾', '😤', '😡', '😠', '🤬', '👿', '😒'},
-    '👍':{'👍','👌','💪','🤟','✌','🙌','👏',}
+    '😾': {'🤮','😾', '😤', '😡', '😠', '🤬', '👿', '😒','🖕'},
+    '👍': {'👍','👌','🦾','💪','🤟','🖖','✌','🙌','👏','🙂', '🙃','🤤', '😌','😎', '🤠'},
+    '🎉':{'🥂','🥳','✨','🍻','🎶','💐','🎆','🎊','🎉'}
 }
 
 
 
-logging.basicConfig(level=logging.INFO)
-transformers_logger = logging.getLogger("transformers")
-transformers_logger.setLevel(logging.WARNING)
+def evaluate(y_true, y_pred, labels, model_name):
 
-LIST_OF_PATH_TO_CSV = {
-    "Kan11":"data/Kan11_comments.csv",
-    # "Kan11News":"data/Kan11News_comments.csv",
-    "ScienceDavidson": "data/ScienceDavidson_comments.csv",
-}
+    print(model_name)
 
+    print("macro:")
+    print(precision_recall_fscore_support(y_true, y_pred, average='macro', warn_for=tuple()))
+    
+    print("\nmicro:")
+    print(precision_recall_fscore_support(y_true, y_pred, average='micro', warn_for=tuple()))
+    
+    print("\nconfusion matrix:")
+    print(confusion_matrix(y_true, y_pred, labels=labels))
+    
+    print("\naccuracy:")
+    print(accuracy_score(y_true, y_pred))
 
 def reads_csv(path):
     # read from csv
@@ -37,85 +50,132 @@ def reads_csv(path):
     # replace &quot; with ""
     df['text'] = df['text'].apply(lambda x: re.sub('&quot;', '"', x))
 
-    # reverse text
-    # todo_1: problem with english..............
-    df['text'] = df['text'].apply(lambda x: x[::-1])
-
     return df
 
-
-if __name__ == '__main__':
+def prepare_data():
 
     # load data from csv
-    df_davison = reads_csv(LIST_OF_PATH_TO_CSV["ScienceDavidson"])
-    df_Kan11 = reads_csv(LIST_OF_PATH_TO_CSV["Kan11"])
-    # df_kan11News = reads_csv(LIST_OF_PATH_TO_CSV["Kan11News"])
+    data_list = os.listdir('data')
+    
+    df = []
+    for channel in data_list:
+        if channel.lower().endswith(".csv"):
+            print(f'Loading {channel}')
+            df += [reads_csv(f'data\\{channel}')]
 
-    # concat data and convert emojis to unique numbers
-    all_data = pd.concat([df_davison, df_Kan11])
+    # concat data and convert emojis to unique numbers(labels)
+    all_data = pd.concat(df)
     all_data_2 = pd.DataFrame()
-    moving_rows = pd.DataFrame()
     for emoji in EMOJI_SUBGROUPS:
         for emoji_to_replace in EMOJI_SUBGROUPS[emoji]:
             regex = emoji_to_replace + '.*'
             all_data['emoji'] = all_data['emoji'].str.replace(regex, emoji, regex=True)
 
 
-    #emojis_option = '😃🤣🥰💗🙁😱😾👍'
     for index, row in all_data.iterrows():
         if row['emoji'] in EMOJI_SUBGROUPS:
             all_data_2 = all_data_2.append(row)
     
-    print(all_data_2)
     all_data = all_data_2
     
     all_data['labels'] = all_data.groupby(["emoji"]).ngroup()
 
+    return all_data
+
+def create_emoji_label_dict(file_name, all_data):
     emoji_dict = {}
     for index, row in all_data.iterrows():
         emoji_dict[int(row["labels"])] = row["emoji"]
 
-    # save model
-    file_name = 'models\\model_29.8_2_dict'
+    # save dictionary 
+    file_name = file_name + '_dict'
     outfile = open(file_name, 'wb')
     pickle.dump(emoji_dict, outfile)
     outfile.close()
 
-    all_data = all_data.drop('emoji', axis=1)
+    return emoji_dict
 
-   # smaller data frame - to delete later
-    num_of_classes = max(all_data['labels']) + 1
-    print(num_of_classes)
-    # all_data = all_data[all_data['labels']< num_of_classes]
-
-    # Preparing train data and eval data
-    X_train, X_test, y_train, y_test = train_test_split(
-        all_data['text'], all_data['labels'], test_size=0.2, random_state=42)
-    train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
-    eval_df = pd.DataFrame({'text': X_test, 'labels': y_test})
-
-    # Optional model configuration
-    # todo3 : I added output_dir="output_dir"
-    model_args = ClassificationArgs(
-        num_train_epochs=1, output_dir="outputs", overwrite_output_dir=True)
-
-    # todo2 : use_cuda=False why??? doesnt work otherwise
-    # Create a ClassificationModel
-    model = ClassificationModel(
-        "roberta", "roberta-base", args=model_args, use_cuda=False, num_labels=num_of_classes)
-
-    # Train the model
-    model.train_model(train_df)
-
-    # Evaluate the model
-    # todo: 4 - need to save these parameters too!!
-    result, model_outputs, wrong_predictions = model.eval_model(eval_df)
-
-    # save model
-    file_name = 'models\\model_29.8_2'
+def save_model(file_name):
+    #save model
     outfile = open(file_name, 'wb')
     pickle.dump(model, outfile)
     outfile.close()
 
-    # Make predictions with the model
-    # predictions, raw_outputs = model.predict(["Sam was a Wizard"])
+    #save count_vect
+    file_name_1 = file_name + '_count_vect'
+    outfile = open(file_name_1, 'wb')
+    pickle.dump(count_vect, outfile)
+    outfile.close()
+
+    #save tf_transformer
+    file_name_2 = file_name + '_tf_transformer'
+    outfile = open(file_name_2, 'wb')
+    pickle.dump(tf_transformer, outfile)
+    outfile.close()
+
+if __name__ == '__main__':
+
+    all_data = prepare_data()
+    print("data is ready")
+
+
+    # create dictionary (label->emoji)
+    title = 'logistic_regression'
+    now = datetime.now()
+    file_name = f'models\\{now.strftime("%d-%m_%H-%M")}_{title}'
+    print(f"file name is {file_name}")
+
+    emoji_dict = create_emoji_label_dict(file_name, all_data)
+    print("emoji_dict is ready")
+
+
+    all_data = all_data.drop('emoji', axis=1)
+
+
+    #Preparing train data and eval data
+    X_train, X_test, y_train, y_test = train_test_split(
+        all_data['text'], all_data['labels'], test_size=0.2, random_state=42)
+    train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
+    test_df = pd.DataFrame({'text': X_test, 'labels': y_test})
+    
+
+    count_vect = CountVectorizer(ngram_range=(1,2))
+    X_train_counts = count_vect.fit_transform(train_df.text)
+    X_test_counts = count_vect.transform(test_df.text)
+
+    tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
+    X_train_tf = tf_transformer.transform(X_train_counts)
+    X_test_tfidf = tf_transformer.transform(X_test_counts)
+
+
+    #Logistic Regression Classifier
+    model=LogisticRegression().fit(X_train_tf, train_df.labels)
+    print("finished: creating classifier")
+
+    logistic_predicted=model.predict(X_test_tfidf)
+
+    print("finished: predict the test set")
+
+
+    inverse_dict={count_vect.vocabulary_[w]:w for w in count_vect.vocabulary_.keys()}
+
+
+    # wrong classification
+    df = pd.DataFrame(X_test.to_numpy(), columns = ["text"])
+    df["actual"] = [emoji_dict[tes] for tes in y_test.to_numpy()]
+    df["predicted"] = [emoji_dict[pre] for pre in logistic_predicted]
+    incorrect = df[df["actual"] != df["predicted"]]
+    pd.options.display.max_colwidth = None
+    correct = df[df["actual"] == df["predicted"]]
+
+    print("start writing to excel")
+
+    incorrect.to_excel("incorrect.xlsx")
+    correct.to_excel("correct.xlsx")
+    y_test.to_numpy()
+
+    print(emoji_dict)
+
+    evaluate(y_test, logistic_predicted, model.classes_, file_name)
+
+    save_model(file_name)
