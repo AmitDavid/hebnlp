@@ -3,6 +3,10 @@ import pickle
 import re
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import AdaBoostClassifier
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.model_selection import train_test_split
@@ -13,16 +17,30 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from datetime import datetime
 
+
+SUBGROUP_LIMIT = 100000
 EMOJI_SUBGROUPS = {
-    '😃': {'🏅', '🔥', '💯', '👑', '🏆', '😀', '😃', '😄', '😁', '😅', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤓', '🧐', },
+    '😃': {'🥂','🥳','✨','🍻','🎶','💐','🎆','🎊','🎉','🏅','🔥','💯','👑','🏆','😀', '😃', '😄', '😁', '😅', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤓', '🧐', },
     '🤣': {'🤣', '😂', '😆', '🤪', '😝', '😹'},
-    '💗': {'🌈', '🙏', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
-    '😢': {'🤦‍', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪', '👎', },
+    '💗': {'🌈','🙏','💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍','🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
+    '😢': {'🤦‍','😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪', '👎' },
     '😱': {'🙀', '😯', '😱', '😮', '😲', '😳', '😵', '🤯', },
-    '😾': {'🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕', },
-    '👍': {'👍', '👌', '🦾', '💪', '🤟', '🖖', '✌', '🙌', '👏', '🙂', '🙃', '🤤', '😌', '😎', '🤠', },
-    '🎉': {'🥂', '🥳', '✨', '🍻', '🎶', '💐', '🎆', '🎊', '🎉', },
+    '😾': {'🤮','😾', '😤', '😡', '😠', '🤬', '👿', '😒','🖕'},
+    '👍': {'👍','👌','🦾','💪','🤟','🖖','✌','🙌','👏','🙂', '🙃','🤤', '😌','😎', '🤠'},
 }
+
+def even_emojis(all_data, emoji_dict):
+    df_emoji_list = []
+    num_labels = len(emoji_dict)
+    for label in range(num_labels):
+        df = all_data[all_data['labels'] == label]
+        if (df.shape[0] > SUBGROUP_LIMIT):
+            df = df.sample(n=SUBGROUP_LIMIT)
+
+        print(str(emoji_dict[label]) + ':  ' +str(df.shape[0]))
+        df_emoji_list+=[df]
+    
+    return pd.concat(df_emoji_list)
 
 
 def evaluate(y_true, y_pred, labels, model_name):
@@ -86,6 +104,7 @@ def prepare_data():
 
     all_data['labels'] = all_data.groupby(["emoji"]).ngroup()
 
+    all_data = all_data.drop_duplicates()
     return all_data
 
 
@@ -103,22 +122,9 @@ def create_emoji_label_dict(file_name, all_data):
     return emoji_dict
 
 
-def save_model(file_name):
-    # save model
+def save_var_to_file(file_name, var):
     outfile = open(file_name, 'wb')
-    pickle.dump(model, outfile)
-    outfile.close()
-
-    # save count_vect
-    file_name_1 = file_name + '_count_vect'
-    outfile = open(file_name_1, 'wb')
-    pickle.dump(count_vect, outfile)
-    outfile.close()
-
-    # save tf_transformer
-    file_name_2 = file_name + '_tf_transformer'
-    outfile = open(file_name_2, 'wb')
-    pickle.dump(tf_transformer, outfile)
+    pickle.dump(var, outfile)
     outfile.close()
 
 
@@ -137,8 +143,9 @@ if __name__ == '__main__':
     all_data = prepare_data()
     print("data is ready")
 
+    title = 'AdaBoost'
     #title = 'logistic_regression'
-    title = 'Random_Forest'
+    #title = 'Random_Forest'
     now = datetime.now()
     file_name = f'models\\{now.strftime("%d-%m_%H-%M")}_{title}'
     print(f"file name is {file_name}")
@@ -149,12 +156,14 @@ if __name__ == '__main__':
 
     all_data = all_data.drop('emoji', axis=1)
 
-    # Preparing train data and eval data
+    all_data = even_emojis(all_data, emoji_dict)
+    #Preparing train data and eval data
     X_train, X_test, y_train, y_test = train_test_split(
         all_data['text'], all_data['labels'], test_size=0.2, random_state=42)
     train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
     test_df = pd.DataFrame({'text': X_test, 'labels': y_test})
 
+    
     count_vect = CountVectorizer(ngram_range=(1, 2))
     X_train_counts = count_vect.fit_transform(train_df.text)
     X_test_counts = count_vect.transform(test_df.text)
@@ -163,11 +172,13 @@ if __name__ == '__main__':
     X_train_tf = tf_transformer.transform(X_train_counts)
     X_test_tfidf = tf_transformer.transform(X_test_counts)
 
-    # #Logistic Regression Classifier
-    # model=LogisticRegression().fit(X_train_tf, train_df.labels)
 
-    model = RandomForestClassifier(n_estimators=20).fit(X_train_tf, train_df.labels)
+    #Logistic Regression Classifier
+    #model=LogisticRegression().fit(X_train_tf, train_df.labels)
+    #model = RandomForestClassifier(n_estimators=20).fit(X_train_tf, train_df.labels)
 
+    abc = AdaBoostClassifier(n_estimators=50, learning_rate=1)
+    model = abc.fit(X_train_tf, y_train)
     print("finished: creating classifier")
 
     test_predicted = model.predict(X_test_tfidf)
@@ -185,4 +196,7 @@ if __name__ == '__main__':
 
     evaluate(y_test, test_predicted, model.classes_, file_name)
 
-    save_model(file_name)
+    save_var_to_file(file_name + '_model', model)
+    save_var_to_file(file_name + '_count_vect', count_vect)
+    save_var_to_file(file_name + '_tf_transformer', tf_transformer)
+
