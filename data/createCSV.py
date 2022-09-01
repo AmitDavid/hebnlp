@@ -15,7 +15,7 @@ LIST_OF_CHANNEL_IDS = {
     # "UCXktYAeWz8eRTQQDMKDZVgw" : "Hadag Nahash",
     # "UCo4y7A6EF2tZ1Q2Oxx64HNQ" : "Omer Adam",
     # "UCTt1T_9iPhSaF0QhlgYeoeg" : "Mako",
-    "UCy_lqFqTpf7HTiv3nNT2SxQ" : "foodi"
+    #"UCy_lqFqTpf7HTiv3nNT2SxQ" : "foodi"
 
 }
 

@@ -13,14 +13,9 @@
 
 
 things to do:
-1. fix the monkey
-2. requirments file//+readme
-3. take 10 most common emojies - how many rows we got? todo model on it.
-to try group the emojies that are the same.
-maybe there is such project exsit that groups similar emojies.
-4. more models - logistic regression - sklearn....
-5. finish the report
-6. the \r event, is it the same in exh os? check
-7. todo in the code to check
-8. problem with the chosen model...stuck on the previous
-9. the gui gets too big
+1. requirments file//+readme
+2. more models 
+3. finish the report
+4. the \r event, is it the same in exh os? check
+5. todo in the code to check
+6. problem with the chosen model...stuck on the previous

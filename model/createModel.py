@@ -2,6 +2,7 @@ import pandas as pd
 import pickle
 import re
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.model_selection import train_test_split
@@ -24,7 +25,6 @@ EMOJI_SUBGROUPS = {
     '👍': {'👍','👌','🦾','💪','🤟','🖖','✌','🙌','👏','🙂', '🙃','🤤', '😌','😎', '🤠'},
     '🎉':{'🥂','🥳','✨','🍻','🎶','💐','🎆','🎊','🎉'}
 }
-
 
 
 def evaluate(y_true, y_pred, labels, model_name):
@@ -113,24 +113,32 @@ def save_model(file_name):
     pickle.dump(tf_transformer, outfile)
     outfile.close()
 
+def create_correct_incorrect_excels(X_test, y_test):
+    df = pd.DataFrame(X_test.to_numpy(), columns = ["text"])
+    df["actual"] = [emoji_dict[tes] for tes in y_test.to_numpy()]
+    df["predicted"] = [emoji_dict[pre] for pre in test_predicted]
+    incorrect = df[df["actual"] != df["predicted"]]
+    correct = df[df["actual"] == df["predicted"]]
+    incorrect.to_excel("incorrect.xlsx")
+    correct.to_excel("correct.xlsx")
+
 if __name__ == '__main__':
 
     all_data = prepare_data()
     print("data is ready")
 
 
-    # create dictionary (label->emoji)
-    title = 'logistic_regression'
+    #title = 'logistic_regression'
+    title = 'Random_Forest'
     now = datetime.now()
     file_name = f'models\\{now.strftime("%d-%m_%H-%M")}_{title}'
     print(f"file name is {file_name}")
 
+    # create dictionary (label->emoji)
     emoji_dict = create_emoji_label_dict(file_name, all_data)
     print("emoji_dict is ready")
 
-
     all_data = all_data.drop('emoji', axis=1)
-
 
     #Preparing train data and eval data
     X_train, X_test, y_train, y_test = train_test_split(
@@ -148,34 +156,26 @@ if __name__ == '__main__':
     X_test_tfidf = tf_transformer.transform(X_test_counts)
 
 
-    #Logistic Regression Classifier
-    model=LogisticRegression().fit(X_train_tf, train_df.labels)
+    # #Logistic Regression Classifier
+    # model=LogisticRegression().fit(X_train_tf, train_df.labels)
+
+    model = RandomForestClassifier(n_estimators=20).fit(X_train_tf, train_df.labels)
+
     print("finished: creating classifier")
 
-    logistic_predicted=model.predict(X_test_tfidf)
+    test_predicted=model.predict(X_test_tfidf)
 
     print("finished: predict the test set")
 
-
     inverse_dict={count_vect.vocabulary_[w]:w for w in count_vect.vocabulary_.keys()}
 
+    # write wrong\right classification to excel
+    create_correct_incorrect_excels(X_test, y_test)
 
-    # wrong classification
-    df = pd.DataFrame(X_test.to_numpy(), columns = ["text"])
-    df["actual"] = [emoji_dict[tes] for tes in y_test.to_numpy()]
-    df["predicted"] = [emoji_dict[pre] for pre in logistic_predicted]
-    incorrect = df[df["actual"] != df["predicted"]]
-    pd.options.display.max_colwidth = None
-    correct = df[df["actual"] == df["predicted"]]
-
-    print("start writing to excel")
-
-    incorrect.to_excel("incorrect.xlsx")
-    correct.to_excel("correct.xlsx")
     y_test.to_numpy()
 
     print(emoji_dict)
 
-    evaluate(y_test, logistic_predicted, model.classes_, file_name)
+    evaluate(y_test, test_predicted, model.classes_, file_name)
 
     save_model(file_name)
