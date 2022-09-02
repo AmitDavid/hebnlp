@@ -7,14 +7,33 @@ YOUTUBE_API_KEY = "AIzaSyCgJDfT5eyRi6M9u893npJRC7gQ6Ql_YQU"
 HEBREW_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']
 
 LIST_OF_CHANNEL_IDS = {
+    # News
     "UCDJ6HHS5wkNaSREumdJRYhg": "Kan11",
-    "UC_HwfTAcjBESKZRJq6BTCpg": "Kan11News",
-    "UCP926AKuhsPeSAnqf8avq7w": "ScienceDavidson",
+    "UC_HwfTAcjBESKZRJq6BTCpg": "Kan11 News",
+    "UCTt1T_9iPhSaF0QhlgYeoeg": "Mako",
+
+    # Science
+    "UCP926AKuhsPeSAnqf8avq7w": "Science Davidson",
+
+    # Music
     "UCGwuWQ_oCQfQ4lPASPbCvYg": "Idan Raichel",
     "UCXktYAeWz8eRTQQDMKDZVgw": "Hadag Nahash",
     "UCo4y7A6EF2tZ1Q2Oxx64HNQ": "Omer Adam",
-    "UCTt1T_9iPhSaF0QhlgYeoeg": "Mako",
+
+    # Food
     "UCy_lqFqTpf7HTiv3nNT2SxQ": "foodi",
+
+    # Tech
+    "UCRy2RDrQqWmSaW9oN0XvgVA": "Alon Garini",
+    "UCmh5zzdzpvhgmVajLDZRUiw": "Alon Garini Shorts",
+    "UCsQjijhBfiG8RaK2Ep8tEdw": "Yam Olisker",
+    "UCXFGmXkfreN1p1SpJWst1zw": "Yam Olisker Shorts",
+    "UCojsJ_jkaD5tBK-W47EH6DQ": "Shibolet Tech",
+    "UCU__3OH_w70D20bshCVS5fQ": "Shibolet Tech Shorts",
+    "UCxi8Vqu5lVgKzJ0wkhl9x0Q": "TMLGaming",
+    "UCLb4e_vCPhaEUr4QDsmLWcw": "Y4PC",
+    "UCJsStgJX7SdyTAxd9HUEQpQ": "Buy in China",
+    "UC0gZ2-X8N6LvYae1DubqMcQ": "HardwareX",
 }
 
 
