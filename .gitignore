@@ -1,6 +1,6 @@
-all_data.csv
 outputs/
 cache_dir/
 runs/
-correct.xlsx
-incorrect.xlsx
+correct.csv
+incorrect.csv
+all_data.csv

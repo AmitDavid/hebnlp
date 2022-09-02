@@ -124,6 +124,14 @@ def start_loading_animation(window):
     window['Output'].update()
 
 
+def stop_loading_animation(window):
+    '''
+    Stop loading animation, enable the button
+    '''
+    window['LoadingAnimation'].update(visible=False)
+    window['TemporarlyOutput'].update(visible=True)
+    window['ResetButton'].update(disabled=False)
+
 if __name__ == '__main__':
     # Keep only files that end with '_model' from the models folder
     # The names for the list will not contain '_model'
@@ -148,9 +156,7 @@ if __name__ == '__main__':
             start_loading_animation(window)
 
         else:  # Prediction has finished, stop animation and enable button
-            window['LoadingAnimation'].update(visible=False)
-            window['TemporarlyOutput'].update(visible=True)
-            window['ResetButton'].update(disabled=False)
+            stop_loading_animation(window)
 
         if event == 'ResetButton':
             clean_choices(window)
