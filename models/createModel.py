@@ -132,7 +132,6 @@ def prepare_data(file_path):
     all_data = pd.DataFrame()
     for channel in csv_files_list:
         all_data = pd.concat([all_data, reads_csv(f'data\{channel}')])
-        break
 
     # Replace emoji with it's equivalence class label and remove any emoji modifiers (skin tone, gender etc..)
     print('\tReplacing emoji with it\'s equivalence class label')
