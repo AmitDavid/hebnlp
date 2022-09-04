@@ -11,24 +11,61 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import (accuracy_score, confusion_matrix,
                              precision_recall_fscore_support)
 # sklearn classifiers
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import NearestCentroid
+from sklearn import tree
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 
-SUBGROUP_LIMIT = 10000
+SUBGROUP_LIMIT = 10000000
+TEXT_LEN_LIMIT = 35
 FILE_NAME_DATE_FORMAT = "%m-%d_%H-%M"
-TEST_SIZE = 0.2
+TEST_SIZE = 0.1
+
 EMOJI_SUBGROUPS = {
-    '😃': {'🥂', '🥳', '✨', '🍻', '🎶', '💐', '🎆', '🎊', '🎉', '🏅', '🔥', '💯', '👑', '🏆', '😀', '😃', '😄', '😁', '😅', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤓', '🧐', },
+    '😃': {'👍', '👌', '🦾', '💪', '🤟', '🖖', '✌', '🙌', '👏', '🙂', '🙃', '🤤', '😌', '😎', '🤠','🥂', '🥳', '✨', '🍻', '🎶', '💐', '🎆', '🎊', '🎉', '🏅', '🔥', '💯', '👑', '🏆', '😀', '😃', '😄', '😁', '😅', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤓', '🧐', },
     '🤣': {'🤣', '😂', '😆', '🤪', '😝', '😹'},
     '💗': {'🌈', '🙏', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
-    '😢': {'🤦‍', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪', '👎'},
+    '😢': {'🤦‍', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪'},
     '😱': {'🙀', '😯', '😱', '😮', '😲', '😳', '😵', '🤯', },
-    '😾': {'🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
-    '👍': {'👍', '👌', '🦾', '💪', '🤟', '🖖', '✌', '🙌', '👏', '🙂', '🙃', '🤤', '😌', '😎', '🤠'},
+    '😾': {'👎','🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
+    #'👍': {'👍', '👌', '🦾', '💪', '🤟', '🖖', '✌', '🙌', '👏', '🙂', '🙃', '🤤', '😌', '😎', '🤠'},
 }
+
+# EMOJI_SUBGROUPS = {
+#     '🤣': {'🤣', '😂', '😆', '😝', '😹'},
+#     '😚': { '💘', '💝', '💖', '💗', '💕', '❤', '🧡', '🥰', '😍', '😘', '😗', '☺', '😻', '😽','👍', '👌', '💪', '👏', '🙂','🥂', '🥳', '🏅', '💯', '👑', '🏆', '😀', '😃', '😄', '😊', '🤩', '😺', '😸', '🤓', },
+#     '😾': {'🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕','👎'},
+#     '😢': { '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪',},
+# }
+
+
+ENGLISH_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+def is_non_english(text):
+    '''
+    Check if there is an hebrew letter in the first 'letters_limit' letters of the string
+    Use 'letters_limit=None' to check entire string
+    '''
+    text = text.lower()
+    for i, letter in enumerate(text):
+
+        if letter in ENGLISH_LETTERS:
+            return False
+
+    return True
+
+
+# def get_hebrew_stopwords():
+#     stop_path="data\\heb_stopwords.txt"
+#     with open(stop_path, encoding="utf-8") as in_file:
+#         lines=in_file.readlines()
+#         res=[l.strip() for l in lines]
+#         print(res[:4])
+#     return res
 
 
 def limit_emojis_subgroup_size(all_data, label_to_emoji_dict, subgroup_limit):
@@ -54,7 +91,8 @@ def evaluate(y_true, y_pred, labels, model_name):
     string_to_print = f'Statistics for {model_name}'
     string_to_print += "\nNumber of samples per label (Test semple size):\n"
 
-    statistics_df = pd.DataFrame(get_label_and_emoji_dicts()[0], index=['emoji'])
+    statistics_df = pd.DataFrame(
+        get_label_and_emoji_dicts()[0], index=['emoji'])
 
     # Get sum
     sum_of_labels = pd.Series(y_true).value_counts()
@@ -69,12 +107,14 @@ def evaluate(y_true, y_pred, labels, model_name):
     string_to_print += str(statistics_df.T)
 
     string_to_print += "\n\nmacro:"
-    string_to_print += str(precision_recall_fscore_support(y_true, y_pred, average='macro', warn_for=tuple()))
+    string_to_print += str(precision_recall_fscore_support(y_true,
+                                                           y_pred, average='macro', warn_for=tuple()))
 
     string_to_print += "\n\nmicro:"
-    string_to_print += str(precision_recall_fscore_support(y_true, y_pred, average='micro', warn_for=tuple()))
+    string_to_print += str(precision_recall_fscore_support(y_true,
+                                                           y_pred, average='micro', warn_for=tuple()))
 
-    string_to_print += "\n\nconfusion matrix:"
+    string_to_print += "\n\nconfusion matrix:\n"
     string_to_print += str(confusion_matrix(y_true, y_pred, labels=labels))
 
     string_to_print += "\n\naccuracy:"
@@ -87,6 +127,7 @@ def evaluate(y_true, y_pred, labels, model_name):
         file.write(string_to_print)
 
 
+
 def reads_csv(path):
     '''
     Read csv file and return a dataframe
@@ -96,9 +137,17 @@ def reads_csv(path):
 
     # Replace &quot; with "
     df['text'] = df['text'].apply(lambda x: re.sub('&quot;', '"', x))
+    
+    df_rows = pd.DataFrame()
+    for index, row in df.iterrows():
+        row_text = row['text']
+        emoji = row['emoji']
+        if (len(row['text'])< TEXT_LEN_LIMIT) and (is_non_english(row_text)):
+            result =''.join([i for i in row_text if not i.isdigit()])
+            dff = pd.DataFrame([[result, emoji]], columns=["text", "emoji"])
+            df_rows = pd.concat([df_rows, dff])
 
-    return df
-
+    return df_rows
 
 def get_label_and_emoji_dicts(file_path=None):
     '''
@@ -125,7 +174,8 @@ def prepare_data(file_path):
     '''
     print("Preparing data:")
     # Get list of all csv files in the 'data' directory
-    csv_files_list = [file for file in os.listdir('data') if file.endswith('.csv')]
+    csv_files_list = [file for file in os.listdir(
+        'data') if file.endswith('.csv')]
 
     # Read all csv files and concatenate them into one dataframe
     print('\tLoading csv files')
@@ -138,7 +188,8 @@ def prepare_data(file_path):
     for emoji in EMOJI_SUBGROUPS:
         for emoji_to_replace in EMOJI_SUBGROUPS[emoji]:
             regex = emoji_to_replace + '.*'
-            all_data['emoji'] = all_data['emoji'].str.replace(regex, emoji, regex=True)
+            all_data['emoji'] = all_data['emoji'].str.replace(
+                regex, emoji, regex=True)
 
     # Remove emojies that are not in our emoji dictionary
     print('\tRemoving emojies that are not in our emoji dictionary')
@@ -153,6 +204,9 @@ def prepare_data(file_path):
     # Rename 'emoji' column to 'labels'
     df_to_model.rename(columns={'emoji': 'labels'}, inplace=True)
 
+    df_to_model = df_to_model.drop_duplicates(subset='text', keep='first')
+
+    #df_to_model.to_csv("cheking_data")
     return df_to_model
 
 
@@ -171,8 +225,10 @@ def create_correct_incorrect_csvs(X_test, y_test):
     df = pd.DataFrame(X_test.to_numpy(), columns=["text"])
     labels_to_emoji_dict = get_label_and_emoji_dicts()[0]
 
-    df["actual"] = [labels_to_emoji_dict[actual_emoji] for actual_emoji in y_test.to_numpy()]
-    df["predicted"] = [labels_to_emoji_dict[predicted_emoji] for predicted_emoji in test_predicted]
+    df["actual"] = [labels_to_emoji_dict[actual_emoji]
+                    for actual_emoji in y_test.to_numpy()]
+    df["predicted"] = [labels_to_emoji_dict[predicted_emoji]
+                       for predicted_emoji in test_predicted]
 
     incorrect = df[df["actual"] != df["predicted"]]
     incorrect.to_csv("incorrect.csv")
@@ -182,19 +238,25 @@ def create_correct_incorrect_csvs(X_test, y_test):
 
 
 if __name__ == '__main__':
-    title = 'AdaBoost'
-    # title = 'logistic_regression'
+
+    #title = 'decision tree'
+    #title = 'NearestCentroid'
+    #title = 'naive_bayes'
+    #title = 'Neural network'
+    #title = 'AdaBoost'
+    title = 'logistic_regression'
     #title = 'Random_Forest'
     now = datetime.now()
     file_path = f'models\{now.strftime(FILE_NAME_DATE_FORMAT)}_{title}'
     print(f'File path is \'{file_path}\'')
 
-    df_to_model = prepare_data(file_path)
+    all_data = prepare_data(file_path)
 
     # Limit the size of each emoji subgroup to 'SUBGROUP_LIMIT'
-    # print(f'\tLimiting the size of each emoji subgroup to {SUBGROUP_LIMIT}')
-    # label_to_emoji_dict = get_label_and_emoji_dicts(file_path)[0]
-    # df_to_model = limit_emojis_subgroup_size(all_data, label_to_emoji_dict, SUBGROUP_LIMIT)
+    print(f'\tLimiting the size of each emoji subgroup to {SUBGROUP_LIMIT}')
+    label_to_emoji_dict = get_label_and_emoji_dicts(file_path)[0]
+    df_to_model = limit_emojis_subgroup_size(
+        all_data, label_to_emoji_dict, SUBGROUP_LIMIT)
 
     # Preparing train data and eval data
     X_train, X_test, y_train, y_test = train_test_split(df_to_model['text'], df_to_model['labels'],
@@ -202,23 +264,51 @@ if __name__ == '__main__':
     train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
     test_df = pd.DataFrame({'text': X_test, 'labels': y_test})
 
-    count_vect = CountVectorizer(ngram_range=(1, 2))
+    #heb_stop_words=get_hebrew_stopwords()
+    count_vect=CountVectorizer(ngram_range=(1, 2))
     X_train_counts = count_vect.fit_transform(train_df.text)
     X_test_counts = count_vect.transform(test_df.text)
 
-    tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
+    tf_transformer = TfidfTransformer(use_idf=True).fit(X_train_counts)
     X_train_tf = tf_transformer.transform(X_train_counts)
     X_test_tfidf = tf_transformer.transform(X_test_counts)
 
-    # Logistic Regression Classifier
-    #model=LogisticRegression().fit(X_train_tf, train_df.labels)
-    #model = RandomForestClassifier(n_estimators=20).fit(X_train_tf, train_df.labels)
-
-    abc = AdaBoostClassifier(n_estimators=50, learning_rate=1)
     print("Creating classifier")
-    model = abc.fit(X_train_tf, y_train)
 
-    print("Predict on all data")
+    #--- Neural network ---#
+    #model = MLPClassifier(solver='lbfgs', alpha=1e-5,
+    #                     hidden_layer_sizes=(5, 2), random_state=1)
+    #---------------------------#
+
+    #--- logistic regression ---#
+    model=LogisticRegression(class_weight='balanced')
+    #class_weight='balanced', multi_class='multinomial', solver='lbfgs'
+    #, class_weight = 'balanced'
+    #---------------------------#
+
+    #--- RandomForest ---#
+    #model = RandomForestClassifier(n_estimators=20)
+    #---------------------------#
+
+    #---AdaBoost---#
+    #model = AdaBoostClassifier(n_estimators=50, learning_rate=1)
+    #---------------------------#
+
+    #---NaiveBayes---#
+    #model = MultinomialNB()
+    #---------------------------#
+
+    #---NearestNeighbors---#
+    #model = NearestCentroid()
+    #---------------------------#
+
+    #---DecisionTree---#
+    #model = tree.DecisionTreeClassifier()
+    #---------------------------#
+
+    model = model.fit(X_train_tf, train_df.labels)
+
+    print("Predict on test data")
     test_predicted = model.predict(X_test_tfidf)
 
     inverse_dict = {count_vect.vocabulary_[w]: w for w in count_vect.vocabulary_.keys()}
@@ -230,3 +320,4 @@ if __name__ == '__main__':
     save_variable_to_file(file_path + '_model', model)
     save_variable_to_file(file_path + '_count_vect', count_vect)
     save_variable_to_file(file_path + '_tf_transformer', tf_transformer)
+

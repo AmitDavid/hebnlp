@@ -47,7 +47,9 @@ def perdict_emoji(count_vect, tf_transformer, model, sentence):
     X_sentence_counts = count_vect.transform(train_df.text)
     X_test_tfidf = tf_transformer.transform(X_sentence_counts)
     predictions = model.predict(X_test_tfidf)
-    print(predictions)
+
+
+    print(predictions[0])
     return predictions
 
 
@@ -162,13 +164,13 @@ if __name__ == '__main__':
             clean_choices(window)
 
         # If user pressed enter predict
-        if event == '\r':
+        if event == '\r':            
             # If input is empty, prompt user to enter text
             if len(values['InputBox'].strip()) == 0:
                 window['TemporarlyOutput'].update(GUI_TEXT['NoInput'])
 
             else:  # great, now predict!
-                prediction_thread = prediction_thread_new
+                prediction_thread = Thread(target=model_prediction, daemon=True, args=(window, values['InputBox'], values['Model']))
                 prediction_thread.start()
                 prediction_thread_new = Thread(target=model_prediction, daemon=True, args=(window, values['InputBox'], values['Model']))
 
