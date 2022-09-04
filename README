@@ -24,3 +24,4 @@ things to do:
 to consider:
 1. short the time out for the cat gui
 2. is it better to limit the comments len or not? to compare !
+3. logistice regression vs transformer gru lstm
