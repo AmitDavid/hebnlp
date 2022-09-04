@@ -19,4 +19,8 @@ things to do:
 4. the \r event, is it the same in exh os? check
 5. todo in the code to check
 6. problem with the chosen model...stuck on the previous
-7. short the time out for the cat gui
+
+
+to consider:
+1. short the time out for the cat gui
+2. is it better to limit the comments len or not? to compare !
