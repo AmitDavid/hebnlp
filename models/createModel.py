@@ -34,7 +34,7 @@ EMOJI_SUBGROUPS = {
     '😡': {'👎','🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
 }
 
-MODEL_TITLES = ['LogisticRegression', 'RandomForestClassifier', 'AdaBoostClassifier', 'NaiveBayes', 'NearestNeighbors', 'DecisionTreeClassifier', 'NeuralNetwork']
+MODEL_TITLES = ['LogisticRegression']
 
 
 def get_classifier(title):
@@ -127,7 +127,7 @@ def evaluate(y_true, y_pred, labels, model_name):
     print(string_to_print)
 
     # Save output to file
-    with open(f'statistics\{model_name}_evaluation.txt', 'w', encoding='utf8') as file:
+    with open(f'{model_name}_evaluation.txt', 'w', encoding='utf8') as file:
         file.write(string_to_print)
 
 
