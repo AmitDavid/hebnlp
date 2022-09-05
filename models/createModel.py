@@ -20,8 +20,8 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 ENGLISH_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-SUBGROUP_LIMIT = 10000000000000000
-TEXT_LEN_LIMIT = 150
+SUBGROUP_LIMIT = 100000000000
+TEXT_LEN_LIMIT = 100000000000
 FILE_NAME_DATE_FORMAT = "%m-%d_%H-%M"
 TEST_SIZE = 0.2
 
@@ -34,7 +34,7 @@ EMOJI_SUBGROUPS = {
     '😡': {'👎','🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
 }
 
-MODEL_TITLES = ['LogisticRegression']
+MODEL_TITLES = ['LogisticRegression', 'RandomForestClassifier', 'AdaBoostClassifier', 'NaiveBayes', 'NearestNeighbors', 'DecisionTreeClassifier', 'NeuralNetwork']
 
 
 def get_classifier(title):
