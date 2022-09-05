@@ -11,7 +11,7 @@ An AI that predict the prefred emoji for your **Hebrew** text!
 7) You can try diffrent models and diffrent texts to see the diffrence between them
 
 ## How to create models
-Run "models\createModel.py" with your preferred model and parameters buy changing 'MODEL_TITLES' and get_model_from_title
+Run "models\createModel.py" with your preferred model and parameters by changing 'MODEL_TITLES' and get_model_from_title
 
 ## How to get more youtube comments
 Run "data\createCSV.py", you can add more channels by changing 'LIST_OF_CHANNEL_IDS' and adding there more channel IDs
