@@ -20,27 +20,20 @@ from sklearn import tree
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 
-SUBGROUP_LIMIT = 10000000
-TEXT_LEN_LIMIT = 35
+SUBGROUP_LIMIT = 10000000000000000
+TEXT_LEN_LIMIT = 150
 FILE_NAME_DATE_FORMAT = "%m-%d_%H-%M"
-TEST_SIZE = 0.1
+TEST_SIZE = 0.2
 
 EMOJI_SUBGROUPS = {
     '😃': {'👍', '👌', '🦾', '💪', '🤟', '🖖', '✌', '🙌', '👏', '🙂', '🙃', '🤤', '😌', '😎', '🤠','🥂', '🥳', '✨', '🍻', '🎶', '💐', '🎆', '🎊', '🎉', '🏅', '🔥', '💯', '👑', '🏆', '😀', '😃', '😄', '😁', '😅', '😉', '😊', '😇', '😋', '😛', '🤗', '🤭', '🤩', '😺', '😸', '🤓', '🧐', },
     '🤣': {'🤣', '😂', '😆', '🤪', '😝', '😹'},
-    '💗': {'🌈', '🙏', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
+    '🥰': {'🌈', '🙏', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❤', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '🥰', '😍', '😘', '😗', '☺', '😚', '😙', '😻', '😽', },
     '😢': {'🤦‍', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪'},
     '😱': {'🙀', '😯', '😱', '😮', '😲', '😳', '😵', '🤯', },
-    '😾': {'👎','🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
-    #'👍': {'👍', '👌', '🦾', '💪', '🤟', '🖖', '✌', '🙌', '👏', '🙂', '🙃', '🤤', '😌', '😎', '🤠'},
+    '😡': {'👎','🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
 }
 
-# EMOJI_SUBGROUPS = {
-#     '🤣': {'🤣', '😂', '😆', '😝', '😹'},
-#     '😚': { '💘', '💝', '💖', '💗', '💕', '❤', '🧡', '🥰', '😍', '😘', '😗', '☺', '😻', '😽','👍', '👌', '💪', '👏', '🙂','🥂', '🥳', '🏅', '💯', '👑', '🏆', '😀', '😃', '😄', '😊', '🤩', '😺', '😸', '🤓', },
-#     '😾': {'🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕','👎'},
-#     '😢': { '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😩', '😫', '😟', '💔', '🙁', '😿', '😖', '😣', '😞', '😓', '☹', '🥺', '😕', '🤒', '🤕', '🤧', '😔', '😪',},
-# }
 
 
 ENGLISH_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
@@ -57,16 +50,6 @@ def is_non_english(text):
             return False
 
     return True
-
-
-# def get_hebrew_stopwords():
-#     stop_path="data\\heb_stopwords.txt"
-#     with open(stop_path, encoding="utf-8") as in_file:
-#         lines=in_file.readlines()
-#         res=[l.strip() for l in lines]
-#         print(res[:4])
-#     return res
-
 
 def limit_emojis_subgroup_size(all_data, label_to_emoji_dict, subgroup_limit):
     '''
@@ -123,10 +106,11 @@ def evaluate(y_true, y_pred, labels, model_name):
     print(string_to_print)
 
     # Save output to file
-    with open(f'{model_name}_evaluation.txt', 'w', encoding='utf8') as file:
+    with open(f'statistics\{model_name}_evaluation.txt', 'w', encoding='utf8') as file:
         file.write(string_to_print)
 
-
+def get_path_base(path):
+    return path.split('\\')[-1]
 
 def reads_csv(path):
     '''
@@ -237,14 +221,33 @@ def create_correct_incorrect_csvs(X_test, y_test):
     correct.to_csv("correct.csv")
 
 
+def get_classifier(type):
+
+        if  type == 'logistic_regression':
+            return LogisticRegression(class_weight='balanced')
+        elif type == 'AdaBoost':
+            return AdaBoostClassifier(n_estimators=50, learning_rate=1)
+        elif type == 'Neural_network':
+            return MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+        elif type == 'Random_Forest':
+            return RandomForestClassifier(n_estimators=20)
+        elif type == 'naive_bayes':
+            return MultinomialNB()
+        elif type == 'Nearest_Centroid':
+            return NearestCentroid()
+        elif type == 'decision_tree':
+            return tree.DecisionTreeClassifier()
+ 
+
 if __name__ == '__main__':
 
-    #title = 'decision tree'
-    #title = 'NearestCentroid'
-    #title = 'naive_bayes'
-    #title = 'Neural network'
-    #title = 'AdaBoost'
     title = 'logistic_regression'
+
+    #title = 'decision_tree'
+    #title = 'Nearest_Centroid'
+    #title = 'naive_bayes'
+    #title = 'Neural_network'
+    #title = 'AdaBoost'
     #title = 'Random_Forest'
     now = datetime.now()
     file_path = f'models\{now.strftime(FILE_NAME_DATE_FORMAT)}_{title}'
@@ -264,7 +267,6 @@ if __name__ == '__main__':
     train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
     test_df = pd.DataFrame({'text': X_test, 'labels': y_test})
 
-    #heb_stop_words=get_hebrew_stopwords()
     count_vect=CountVectorizer(ngram_range=(1, 2))
     X_train_counts = count_vect.fit_transform(train_df.text)
     X_test_counts = count_vect.transform(test_df.text)
@@ -275,37 +277,7 @@ if __name__ == '__main__':
 
     print("Creating classifier")
 
-    #--- Neural network ---#
-    #model = MLPClassifier(solver='lbfgs', alpha=1e-5,
-    #                     hidden_layer_sizes=(5, 2), random_state=1)
-    #---------------------------#
-
-    #--- logistic regression ---#
-    model=LogisticRegression(class_weight='balanced')
-    #class_weight='balanced', multi_class='multinomial', solver='lbfgs'
-    #, class_weight = 'balanced'
-    #---------------------------#
-
-    #--- RandomForest ---#
-    #model = RandomForestClassifier(n_estimators=20)
-    #---------------------------#
-
-    #---AdaBoost---#
-    #model = AdaBoostClassifier(n_estimators=50, learning_rate=1)
-    #---------------------------#
-
-    #---NaiveBayes---#
-    #model = MultinomialNB()
-    #---------------------------#
-
-    #---NearestNeighbors---#
-    #model = NearestCentroid()
-    #---------------------------#
-
-    #---DecisionTree---#
-    #model = tree.DecisionTreeClassifier()
-    #---------------------------#
-
+    model = get_classifier(title)
     model = model.fit(X_train_tf, train_df.labels)
 
     print("Predict on test data")
@@ -315,7 +287,8 @@ if __name__ == '__main__':
 
     # Write wrong\right classification to csv and print the evaluation
     create_correct_incorrect_csvs(X_test, y_test)
-    evaluate(y_test.to_numpy(), test_predicted, model.classes_, file_path)
+    
+    evaluate(y_test.to_numpy(), test_predicted, model.classes_, get_path_base(file_path))
 
     save_variable_to_file(file_path + '_model', model)
     save_variable_to_file(file_path + '_count_vect', count_vect)
