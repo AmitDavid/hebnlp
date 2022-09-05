@@ -2,7 +2,6 @@ import os
 import pickle
 import re
 from datetime import datetime
-import statistics
 
 import numpy as np
 import pandas as pd
@@ -19,6 +18,7 @@ from sklearn.neighbors import NearestCentroid
 from sklearn import tree
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
+ENGLISH_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 SUBGROUP_LIMIT = 10000000000000000
 TEXT_LEN_LIMIT = 150
@@ -34,9 +34,32 @@ EMOJI_SUBGROUPS = {
     '😡': {'👎','🤮', '😾', '😤', '😡', '😠', '🤬', '👿', '😒', '🖕'},
 }
 
+MODEL_TITLES = ['LogisticRegression', 'RandomForestClassifier', 'AdaBoostClassifier', 'NaiveBayes', 'NearestNeighbors', 'DecisionTreeClassifier', 'NeuralNetwork']
 
 
-ENGLISH_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+def get_classifier(title):
+    '''
+    Get the model from the title
+    '''
+    if title == 'LogisticRegression':
+        return LogisticRegression(class_weight='balanced')
+    elif title == 'RandomForestClassifier':
+        return RandomForestClassifier(n_estimators=20)
+    elif title == 'AdaBoostClassifier':
+        return AdaBoostClassifier(n_estimators=50, learning_rate=1)
+    elif title == 'NaiveBayes':
+        return MultinomialNB()
+    elif title == 'NearestNeighbors':
+        return NearestCentroid()
+    elif title == 'DecisionTreeClassifier':
+        return tree.DecisionTreeClassifier()
+    elif title == 'NeuralNetwork':
+        return MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+    else:
+        print(f"Unknown model title: {title}")
+
+    return None
+
 
 def is_non_english(text):
     '''
@@ -90,12 +113,10 @@ def evaluate(y_true, y_pred, labels, model_name):
     string_to_print += str(statistics_df.T)
 
     string_to_print += "\n\nmacro:"
-    string_to_print += str(precision_recall_fscore_support(y_true,
-                                                           y_pred, average='macro', warn_for=tuple()))
+    string_to_print += str(precision_recall_fscore_support(y_true, y_pred, average='macro', warn_for=tuple()))
 
     string_to_print += "\n\nmicro:"
-    string_to_print += str(precision_recall_fscore_support(y_true,
-                                                           y_pred, average='micro', warn_for=tuple()))
+    string_to_print += str(precision_recall_fscore_support(y_true, y_pred, average='micro', warn_for=tuple()))
 
     string_to_print += "\n\nconfusion matrix:\n"
     string_to_print += str(confusion_matrix(y_true, y_pred, labels=labels))
@@ -109,8 +130,6 @@ def evaluate(y_true, y_pred, labels, model_name):
     with open(f'statistics\{model_name}_evaluation.txt', 'w', encoding='utf8') as file:
         file.write(string_to_print)
 
-def get_path_base(path):
-    return path.split('\\')[-1]
 
 def reads_csv(path):
     '''
@@ -121,17 +140,18 @@ def reads_csv(path):
 
     # Replace &quot; with "
     df['text'] = df['text'].apply(lambda x: re.sub('&quot;', '"', x))
-    
+
     df_rows = pd.DataFrame()
     for index, row in df.iterrows():
         row_text = row['text']
         emoji = row['emoji']
-        if (len(row['text'])< TEXT_LEN_LIMIT) and (is_non_english(row_text)):
-            result =''.join([i for i in row_text if not i.isdigit()])
+        if (len(row['text']) < TEXT_LEN_LIMIT) and (is_non_english(row_text)):
+            result = ''.join([i for i in row_text if not i.isdigit()])
             dff = pd.DataFrame([[result, emoji]], columns=["text", "emoji"])
             df_rows = pd.concat([df_rows, dff])
 
     return df_rows
+
 
 def get_label_and_emoji_dicts(file_path=None):
     '''
@@ -190,7 +210,6 @@ def prepare_data(file_path):
 
     df_to_model = df_to_model.drop_duplicates(subset='text', keep='first')
 
-    #df_to_model.to_csv("cheking_data")
     return df_to_model
 
 
@@ -221,76 +240,48 @@ def create_correct_incorrect_csvs(X_test, y_test):
     correct.to_csv("correct.csv")
 
 
-def get_classifier(type):
-
-        if  type == 'logistic_regression':
-            return LogisticRegression(class_weight='balanced')
-        elif type == 'AdaBoost':
-            return AdaBoostClassifier(n_estimators=50, learning_rate=1)
-        elif type == 'Neural_network':
-            return MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-        elif type == 'Random_Forest':
-            return RandomForestClassifier(n_estimators=20)
-        elif type == 'naive_bayes':
-            return MultinomialNB()
-        elif type == 'Nearest_Centroid':
-            return NearestCentroid()
-        elif type == 'decision_tree':
-            return tree.DecisionTreeClassifier()
- 
-
 if __name__ == '__main__':
+    # Try different models
+    for title in MODEL_TITLES:
+        now = datetime.now()
+        file_path = f'models\{now.strftime(FILE_NAME_DATE_FORMAT)}_{title}'
+        print(f'File path is \'{file_path}\'')
 
-    title = 'logistic_regression'
+        all_data = prepare_data(file_path)
 
-    #title = 'decision_tree'
-    #title = 'Nearest_Centroid'
-    #title = 'naive_bayes'
-    #title = 'Neural_network'
-    #title = 'AdaBoost'
-    #title = 'Random_Forest'
-    now = datetime.now()
-    file_path = f'models\{now.strftime(FILE_NAME_DATE_FORMAT)}_{title}'
-    print(f'File path is \'{file_path}\'')
+        # Limit the size of each emoji subgroup to 'SUBGROUP_LIMIT'
+        print(f'\tLimiting the size of each emoji subgroup to {SUBGROUP_LIMIT}')
+        label_to_emoji_dict = get_label_and_emoji_dicts(file_path)[0]
+        df_to_model = limit_emojis_subgroup_size(
+            all_data, label_to_emoji_dict, SUBGROUP_LIMIT)
 
-    all_data = prepare_data(file_path)
+        # Preparing train data and eval data
+        X_train, X_test, y_train, y_test = train_test_split(df_to_model['text'], df_to_model['labels'], test_size=TEST_SIZE, random_state=42)
+        train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
+        test_df = pd.DataFrame({'text': X_test, 'labels': y_test})
 
-    # Limit the size of each emoji subgroup to 'SUBGROUP_LIMIT'
-    print(f'\tLimiting the size of each emoji subgroup to {SUBGROUP_LIMIT}')
-    label_to_emoji_dict = get_label_and_emoji_dicts(file_path)[0]
-    df_to_model = limit_emojis_subgroup_size(
-        all_data, label_to_emoji_dict, SUBGROUP_LIMIT)
+        count_vect=CountVectorizer(ngram_range=(1, 2))
+        X_train_counts = count_vect.fit_transform(train_df.text)
+        X_test_counts = count_vect.transform(test_df.text)
 
-    # Preparing train data and eval data
-    X_train, X_test, y_train, y_test = train_test_split(df_to_model['text'], df_to_model['labels'],
-                                                        test_size=TEST_SIZE, random_state=42)
-    train_df = pd.DataFrame({'text': X_train, 'labels': y_train})
-    test_df = pd.DataFrame({'text': X_test, 'labels': y_test})
+        tf_transformer = TfidfTransformer(use_idf=True).fit(X_train_counts)
+        X_train_tf = tf_transformer.transform(X_train_counts)
+        X_test_tfidf = tf_transformer.transform(X_test_counts)
 
-    count_vect=CountVectorizer(ngram_range=(1, 2))
-    X_train_counts = count_vect.fit_transform(train_df.text)
-    X_test_counts = count_vect.transform(test_df.text)
+        print("Creating classifier")
 
-    tf_transformer = TfidfTransformer(use_idf=True).fit(X_train_counts)
-    X_train_tf = tf_transformer.transform(X_train_counts)
-    X_test_tfidf = tf_transformer.transform(X_test_counts)
+        model = get_classifier(title)
+        model = model.fit(X_train_tf, train_df.labels)
 
-    print("Creating classifier")
+        print("Predict on test data")
+        test_predicted = model.predict(X_test_tfidf)
 
-    model = get_classifier(title)
-    model = model.fit(X_train_tf, train_df.labels)
+        inverse_dict = {count_vect.vocabulary_[w]: w for w in count_vect.vocabulary_.keys()}
 
-    print("Predict on test data")
-    test_predicted = model.predict(X_test_tfidf)
+        # Write wrong\right classification to csv and print the evaluation
+        create_correct_incorrect_csvs(X_test, y_test)
+        evaluate(y_test.to_numpy(), test_predicted, model.classes_, file_path)
 
-    inverse_dict = {count_vect.vocabulary_[w]: w for w in count_vect.vocabulary_.keys()}
-
-    # Write wrong\right classification to csv and print the evaluation
-    create_correct_incorrect_csvs(X_test, y_test)
-    
-    evaluate(y_test.to_numpy(), test_predicted, model.classes_, get_path_base(file_path))
-
-    save_variable_to_file(file_path + '_model', model)
-    save_variable_to_file(file_path + '_count_vect', count_vect)
-    save_variable_to_file(file_path + '_tf_transformer', tf_transformer)
-
+        save_variable_to_file(file_path + '_model', model)
+        save_variable_to_file(file_path + '_count_vect', count_vect)
+        save_variable_to_file(file_path + '_tf_transformer', tf_transformer)

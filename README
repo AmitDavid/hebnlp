@@ -1,27 +1,17 @@
-# The project explaination
+# Simlon סמלון
+An AI that predict the prefred emoji for your **Hebrew** text!
 
-# to create 'requirements' file
-
-
-# How to ru
-0) Download requirments from the 'requirements' file (use 'pip install -r requirements')
+# How to run
 1) Clone git to your compter
-2) From the folder "HEBNLP", run the command "gui/gui.py"
-3) Choose model from the list
-4) Write your text into the text box
-5) Press 'enter' to predict emoji
+2) Download project dependencies from 'requirements.txt' file (using 'pip install -r requirements.txt')
+3) From the folder "HEBNLP", run the command "gui/gui.py"
+4) Choose model from the list (We recommand LogisticRegression 😃)
+5) Write your hebrew text in the text box
+6) Press 'enter' to predict emoji
+7) You can try diffrent models and diffrent texts to see the diffrence between them
 
+## How to create models
+Run "models\createModel.py" with your preferred model and parameters buy changing 'MODEL_TITLES' and get_model_from_title
 
-things to do:
-1. requirments file//+readme
-2. more models 
-3. finish the report
-4. the \r event, is it the same in exh os? check
-5. todo in the code to check
-6. problem with the chosen model...stuck on the previous
-
-
-to consider:
-1. short the time out for the cat gui
-2. is it better to limit the comments len or not? to compare !
-3. logistice regression vs transformer gru lstm
+## How to get more youtube comments
+Run "data\createCSV.py", you can add more channels by changing 'LIST_OF_CHANNEL_IDS' and adding there more channel IDs
